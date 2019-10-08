@@ -436,6 +436,65 @@ class TFT_ST7735 : public Print {
 			#endif
 		}
 
+/* ----------------- ARM STM32L0 ------------------------*/
+	#elif defined(ARDUINO_ARCH_STM32L0)
+		bool				_useSPI1;
+		uint8_t 			_cs;
+		
+
+		void spiwrite(uint8_t c)
+		__attribute__((always_inline)) {
+			if (_useSPI1){
+				SPI1.transfer(c);
+			} else {
+				SPI.transfer(c);
+			}
+		}
+
+		void spiwrite16(uint16_t c)
+		__attribute__((always_inline)) {
+			if (_useSPI1){
+				SPI1.transfer16(c);
+			} else {
+				SPI.transfer16(c);
+			}
+		}
+
+		void enableCommandStream(void)
+		__attribute__((always_inline)) {
+			digitalWrite(_dc,LOW);
+		}
+
+		void enableDataStream(void)
+		__attribute__((always_inline)) {
+			digitalWrite(_dc,HIGH);
+		}
+
+		void startTransaction(void)
+		__attribute__((always_inline)) {
+			if (_useSPI1){
+				SPI1.beginTransaction(_ST7735SPI);
+			} else {
+				SPI.beginTransaction(_ST7735SPI);
+			}
+			digitalWrite(_cs,LOW);
+		}
+
+
+		void endTransaction(void)
+		__attribute__((always_inline)) {
+			if (_useSPI1){
+				SPI1.endTransaction();
+			} else {
+				SPI.endTransaction();
+			}
+		}
+
+		void disableCS(void)
+		__attribute__((always_inline)) {
+			digitalWrite(_cs,HIGH);
+		}
+
 /* ----------------- ARM (Teensy 3.0, Teensy 3.1, Teensy 3.2, Teensy 3.4, Teensy 3.5) ----------*/
 	#elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
 		uint8_t 			pcs_data, pcs_command;

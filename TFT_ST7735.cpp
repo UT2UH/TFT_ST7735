@@ -26,6 +26,14 @@
 		_useSPI1 = false;
 		if ((_mosi == 0 || _mosi == 21) && (_sclk == 20)) _useSPI1 = true;
 	}
+	#elif defined(ARDUINO_ARCH_STM32L0) //RHF76-052 etc
+	TFT_ST7735::TFT_ST7735(const uint8_t cspin,const uint8_t dcpin,const uint8_t rstpin)
+	{
+		_cs   = cspin;
+		_dc   = dcpin;
+		_rst  = rstpin;
+		_useSPI1 = true;
+	}	
 	#else //All the rest
 	TFT_ST7735::TFT_ST7735(const uint8_t cspin,const uint8_t dcpin,const uint8_t rstpin)
 	{
@@ -105,6 +113,14 @@ void TFT_ST7735::backlight(bool state)
 		//nop
 	}
 	#endif
+#elif defined(ARDUINO_ARCH_STM32L0)
+//-----------------------------------------RHF76 etc
+	#if !defined (SPI_HAS_TRANSACTION)
+	void TFT_ST7735::setBitrate(uint32_t n)
+	{
+		//nop
+	}
+	#endif	
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
 //-----------------------------------------Teensy 3.0 & 3.1 & 3.2
 	#if !defined (SPI_HAS_TRANSACTION)
@@ -237,6 +253,26 @@ void TFT_ST7735::begin(bool avoidSPIinit)
 		digitalWriteFast(_cs,HIGH);
 	#endif
 		enableDataStream();
+#elif defined(ARDUINO_ARCH_STM32L0)//RHF76 etc
+	pinMode(_dc, OUTPUT);
+	pinMode(_cs, OUTPUT);
+	if (_useSPI1){
+		if (!avoidSPIinit) SPI1.begin();
+		_useSPI1 = true; //confirm
+		if (!SPI.pinIsChipSelect(_cs)) {//ERROR
+			bitSet(_initError,1);
+			return;
+		}
+	} else {
+		if (!avoidSPIinit) SPI.begin();
+		_useSPI1 = false; //confirm
+		if (!SPI.pinIsChipSelect(_cs)) {//ERROR
+			bitSet(_initError,1);
+			return;
+		}
+	}
+	digitalWrite(_cs,HIGH);
+	enableDataStream();		
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
 	if ((_mosi == 11 || _mosi == 7) && (_sclk == 13 || _sclk == 14)) {
         SPI.setMOSI(_mosi);
@@ -2550,7 +2586,7 @@ void TFT_ST7735::_charLineRender(
 		enableDataStream();
 		while(times--) { SPI.transfer16(data); }
 	}
-#elif defined(__MKL26Z64__)
+#elif defined(__MKL26Z64__) || defined(ARDUINO_ARCH_STM32L0)
 	void TFT_ST7735::_pushColors_cont(uint16_t data,uint32_t times)
 	{
 		enableDataStream();
@@ -2561,7 +2597,7 @@ void TFT_ST7735::_charLineRender(
 				SPI.transfer16(data);
 			}
 		}
-	}
+	}	
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
 	void TFT_ST7735::_pushColors_cont(uint16_t data,uint32_t times)
 	{
