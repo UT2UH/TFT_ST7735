@@ -113,14 +113,6 @@ void TFT_ST7735::backlight(bool state)
 		//nop
 	}
 	#endif
-#elif defined(ARDUINO_ARCH_STM32L0)
-//-----------------------------------------RHF76 etc
-	#if !defined (SPI_HAS_TRANSACTION)
-	void TFT_ST7735::setBitrate(uint32_t n)
-	{
-		//nop
-	}
-	#endif	
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
 //-----------------------------------------Teensy 3.0 & 3.1 & 3.2
 	#if !defined (SPI_HAS_TRANSACTION)
@@ -259,17 +251,9 @@ void TFT_ST7735::begin(bool avoidSPIinit)
 	if (_useSPI1){
 		if (!avoidSPIinit) SPI1.begin();
 		_useSPI1 = true; //confirm
-		if (!SPI.pinIsChipSelect(_cs)) {//ERROR
-			bitSet(_initError,1);
-			return;
-		}
 	} else {
 		if (!avoidSPIinit) SPI.begin();
 		_useSPI1 = false; //confirm
-		if (!SPI.pinIsChipSelect(_cs)) {//ERROR
-			bitSet(_initError,1);
-			return;
-		}
 	}
 	digitalWrite(_cs,HIGH);
 	enableDataStream();		
